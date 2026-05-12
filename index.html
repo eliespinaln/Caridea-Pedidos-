@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Caridea — Registro de Pedidos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --brand: #0a2540;
+    --accent: #00b4d8;
+    --green: #06d6a0;
+    --red: #ef476f;
+    --amber: #ffd166;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e2e8f0;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--brand);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header h1 { color: #fff; font-size: 16px; font-weight: 700; }
+  .header p { color: rgba(255,255,255,0.5); font-size: 11px; }
+
+  /* ── Main ── */
+  .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .tab {
+    flex: 1; padding: 8px;
+    border: none; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; color: var(--muted);
+    background: transparent; transition: all 0.2s;
+  }
+  .tab.active { background: var(--brand); color: #fff; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--muted); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+
+  /* ── Fields ── */
+  .field { margin-bottom: 12px; }
+  .label {
+    font-size: 11px; font-weight: 600;
+    color: var(--muted); margin-bottom: 4px;
+    display: block; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .input, .select, .textarea {
+    width: 100%; padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text);
+    background: #fafafa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .input:focus, .select:focus, .textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,180,216,0.1);
+    background: #fff;
+  }
+  .textarea { min-height: 100px; resize: vertical; font-size: 13px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ── Paste zone ── */
+  .paste-zone {
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(0,180,216,0.03);
+  }
+  .paste-zone:hover { background: rgba(0,180,216,0.07); }
+  .paste-zone.active { border-color: var(--green); background: rgba(6,214,160,0.07); }
+  .paste-icon { font-size: 28px; margin-bottom: 6px; }
+  .paste-hint { font-size: 12px; color: var(--muted); }
+  .paste-shortcut {
+    display: inline-block; margin-top: 8px;
+    background: var(--brand); color: #fff;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 3px 8px; border-radius: 4px;
+  }
+
+  /* ── Parsed preview ── */
+  .preview {
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+    display: none;
+  }
+  .preview.show { display: block; }
+  .preview-title { font-size: 11px; font-weight: 700; color: #16a34a; margin-bottom: 8px; }
+  .preview-row {
+    display: flex; gap: 8px; align-items: center;
+    padding: 6px 8px; background: #fff;
+    border-radius: 7px; margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .preview-label { color: var(--muted); min-width: 70px; font-size: 11px; }
+  .preview-val { font-weight: 600; color: var(--text); }
+  .preview-prod {
+    background: #eff6ff; border-radius: 6px;
+    padding: 5px 10px; font-size: 12px;
+    display: flex; justify-content: space-between;
+    margin-bottom: 3px;
+  }
+  .preview-prod-nom { font-weight: 600; }
+  .preview-prod-cant { color: var(--accent); font-family: 'DM Mono', monospace; font-weight: 700; }
+
+  /* ── Ruta badge ── */
+  .ruta-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand); color: #fff;
+    border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; font-weight: 700;
+    margin-top: 4px;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    width: 100%; padding: 14px;
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary {
+    background: var(--brand); color: #fff;
+  }
+  .btn-primary:hover { background: #0d3260; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    background: var(--bg); color: var(--muted);
+    font-size: 12px; padding: 10px;
+  }
+
+  /* ── Success overlay ── */
+  .success-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10,37,64,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; display: none; padding: 20px;
+  }
+  .success-overlay.show { display: flex; }
+  .success-card {
+    background: #fff; border-radius: 16px;
+    padding: 32px 24px; text-align: center;
+    max-width: 320px; width: 100%;
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .success-icon { font-size: 48px; margin-bottom: 12px; }
+  .success-title { font-size: 18px; font-weight: 700; color: var(--brand); margin-bottom: 6px; }
+  .success-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .success-tab {
+    background: #f0fdf4; color: #16a34a;
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 12px; font-weight: 700; margin-bottom: 16px;
+  }
+
+  /* ── Error ── */
+  .error-msg {
+    background: #fef2f2; border: 1px solid #fecaca;
+    color: var(--red); border-radius: 8px;
+    padding: 10px 12px; font-size: 12px;
+    margin-top: 8px; display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* ── Product list (manual mode) ── */
+  .prod-item {
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px; background: #f8fafc;
+    border-radius: 8px; margin-bottom: 6px;
+  }
+  .prod-item select { flex: 2; min-width: 120px; }
+  .prod-item input:first-of-type { flex: 0 0 75px; }
+  .prod-item input:last-of-type { flex: 1; min-width: 80px; }
+  .prod-item .del-btn {
+    background: #fef2f2; border: 1px solid #fecaca;
+    color: var(--red); border-radius: 6px;
+    padding: 6px 8px; cursor: pointer; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .add-prod-btn {
+    width: 100%; padding: 8px;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px; background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+    margin-top: 4px;
+  }
+  .add-prod-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🦐</div>
+  <div>
+    <h1>Caridea — Pedidos</h1>
+    <p>Registro rápido de pedidos</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('paste')">📋 Pegar de WhatsApp</button>
+    <button class="tab" onclick="switchTab('manual')">✏️ Ingresar manual</button>
+  </div>
+
+  <!-- ══ TAB: PASTE ══════════════════════════════════════════ -->
+  <div id="tab-paste">
+    <div class="card">
+      <div class="card-title">Pega el mensaje de WhatsApp</div>
+      <div class="paste-zone" id="pasteZone" onclick="document.getElementById('pasteInput').focus()">
+        <div class="paste-icon">📲</div>
+        <div style="font-weight:600;margin-bottom:4px">Toca aquí y pega el mensaje</div>
+        <div class="paste-hint">El sistema detectará automáticamente<br>cliente, productos, ruta y vendedor</div>
+        <div class="paste-shortcut">Ctrl+V / ⌘V</div>
+      </div>
+      <textarea class="textarea" id="pasteInput" placeholder="Ejemplo:
+Cliente: Juan Pérez
+Productos: Camarón 50lb, Cangrejo 20lb, Tilapia 15lb
+Ruta: Martes SPS y Lago
+Vendedor: Carlos" 
+        style="margin-top:10px"
+        oninput="parsearTexto(this.value)"></textarea>
+    </div>
+
+    <!-- Preview parsed -->
+    <div class="preview" id="preview">
+      <div class="preview-title">✅ Pedido detectado — verifica antes de enviar</div>
+      <div id="preview-content"></div>
+      <div class="ruta-badge" id="preview-ruta-badge"></div>
+    </div>
+
+    <div class="error-msg" id="parse-error"></div>
+
+    <div class="card" id="ruta-override" style="display:none">
+      <div class="card-title">Ruta no detectada — selecciona manualmente</div>
+      <select class="select" id="ruta-manual-paste">
+        <option value="">-- Selecciona la ruta --</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" id="btnEnviarPaste" onclick="enviarPedidoPaste()" disabled>
+      <span class="spinner" id="spinner-paste"></span>
+      <span id="btn-paste-txt">📤 Enviar pedido al Sheet</span>
+    </button>
+  </div>
+
+  <!-- ══ TAB: MANUAL ══════════════════════════════════════════ -->
+  <div id="tab-manual" style="display:none">
+    <div class="card">
+      <div class="card-title">Datos del pedido</div>
+      <div class="grid2">
+        <div class="field">
+          <label class="label">Vendedor *</label>
+          <input class="input" id="m-vendedor" placeholder="Tu nombre"/>
+        </div>
+        <div class="field">
+          <label class="label">Ruta *</label>
+          <select class="select" id="m-ruta">
+            <option value="">-- Selecciona --</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label class="label">Cliente *</label>
+          <input class="input" id="m-cliente" placeholder="Nombre del cliente"/>
+        </div>
+        <div class="field">
+          <label class="label">Ciudad *</label>
+          <input class="input" id="m-ciudad" placeholder="Ciudad"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Productos</div>
+      <div id="prod-list"></div>
+      <button class="add-prod-btn" onclick="agregarProducto()">+ Agregar producto</button>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label class="label">Notas adicionales</label>
+        <textarea class="textarea" id="m-notas" placeholder="Instrucciones especiales, horario de entrega, etc." style="min-height:70px"></textarea>
+      </div>
+    </div>
+
+    <div class="error-msg" id="manual-error"></div>
+    <button class="btn btn-primary" id="btnEnviarManual" onclick="enviarPedidoManual()">
+      <span class="spinner" id="spinner-manual"></span>
+      <span id="btn-manual-txt">📤 Enviar pedido al Sheet</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- Success overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <div class="success-title">¡Pedido registrado!</div>
+    <div class="success-tab" id="success-tab-name"></div>
+    <div class="success-sub" id="success-detail"></div>
+    <button class="btn btn-primary" onclick="resetForm()">📋 Registrar otro pedido</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURACIÓN — Pega aquí la URL de tu Web App de Apps Script
+// ═══════════════════════════════════════════════════════════════
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzDz0ndBlq2Y2PkerIx4blGdovd-BS_lduDQCvoDGnZURYZ8Uxnc2bHg4tfC3qSA7fQ/exec";
+
+// ── Rutas disponibles ─────────────────────────────────────────
+var RUTAS = [
+  { label: "MARTES — SPS Y LAGO",            tab: "MARTES SPS Y LAGO",            keywords: ["martes","sps","lago","martes sps"] },
+  { label: "MARTES — COMA Y SIGUA",          tab: "MARTES COMA Y SIGUA",          keywords: ["martes","coma","sigua","comayagua"] },
+  { label: "MIERCOLES — CORTES Y SPS",       tab: "MIERCOLES CORTES Y SPS",       keywords: ["miercoles","cortes","puerto","miércoles"] },
+  { label: "MIERCOLES — SPS Y CHOLOMA",      tab: "MIERCOLES SPS Y CHOLOMA",      keywords: ["miercoles","choloma","cholu"] },
+  { label: "MIERCOLES — OLANCHO",            tab: "MIERCOLES OLANCHO",            keywords: ["miercoles","olancho","catacamas","juticalpa"] },
+  { label: "JUEVES — CHOLOMA",               tab: "JUEVES CHOLOMA",               keywords: ["jueves","choloma","cholu"] },
+  { label: "JUEVES — TELA Y PROGRESO",       tab: "JUEVES TELA Y PROG",           keywords: ["jueves","tela","progreso","prog"] },
+  { label: "JUEVES — DANLI",                 tab: "JUEVES DANLI",                 keywords: ["jueves","danli","danlí","paraiso"] },
+  { label: "VIERNES — SPS Y LAGO",           tab: "VIERNES SPS Y LAGO",           keywords: ["viernes","sps","lago"] },
+  { label: "VIERNES — COMA-SIGUA-ESPERANZA", tab: "VIERNES COMA-SIGUA-ESPERANZA", keywords: ["viernes","coma","sigua","esperanza"] }
+];
+
+var PRODUCTOS = [
+  "U12 IQF","U15 IQF","16/20 IQF","16/20 WSO","21/25 IQF","21/25 WSO",
+  "26/30 WSO","31/35 IQF","41/50 BLOQUE","41/50 IQF","51/60 BLOQUE","51/60 IQF",
+  "61/70 BLOQUE","ALA DE POLLO MEDIAN POR LB","ALAS JUMBO CAJA","ALMEJA BLANCA",
+  "ALMEJA NACIONAL","ARO CEBOLLA","ARO DE CALAMAR","ARO PANAMEI","BABY PULPO",
+  "BANDEJA DE JAIBA","BOTE ENCURTIDOS","CABEZA PESCADO","CAMARON ENTERO",
+  "CANGREJO","CARACOL","CESINA","CHIMICHURRI ARGENTINO","CHORIZO ARGENTINO",
+  "CHORIZO ARO","CHORIZO BARBACOA PREMIUN","CHORIZO CARACOL","CHORIZO KING CRAB",
+  "CHORIZO LANGOSTA","CHORIZO TENTACULO","CHULETA FRESCA","COLA LANGOSTA",
+  "CORTE DE PUYASO","CORTE ENTRAÑA","CORTE RIBEYE ANGUS CHOICE",
+  "COSTILLA BABY BACK ENTERA","COSTILLA BABY CORTADA AL VACIO",
+  "COSTILLA DE CERDO CAJA DE 30LB","COSTILLA DE CERDO EN CUBO","CRAWFISH",
+  "CURILES","DEDOS DE QUESO","ESPINAZO PESCADO","FILETE BASA","FILETE DE BASSA 2",
+  "FILETE DE PESCADO ENTERO","FILETE DE PESCADO LIMPIO","FILETE PARGO",
+  "FILETE TILAPIA","FILETE TILAPIA CRIOLLA","JAIBA SUCIA","JALAPEÑO",
+  "JALAPEÑO CHEDDAR","JALAPEÑO CREMA","KING CRAB","LOMO DE ATUN","LOMO DE CERDO",
+  "MARISCADA NACIONAL","MEJILLON CHILENO","MEJILLON NEW ZELAND","MEJILLON VERDE",
+  "NEW YORK STEAK","PAPA CRUZ","PAPA FINA","PAPA GAJOS CON PIEL 4*2","PAPA HASH",
+  "PAPAS CLASSIC","PAPAS EUROPEA 3/8","PAPAS WEDGES","PECHUGA DESHUESADA PREMIUN",
+  "PESCADO","PESCADO GRANDE","PIERNA DE CERDO","PULPO ENTERO","SALMON AHUMADO 2LB",
+  "SALMON AQUA","SALMON DUO PACK","SALMON FAMILY PACK","SALMON FRESCO GOURMAR",
+  "SCALLOPS U10","SURIMI GOLDEN","SURIMI PANAMEI","TENTACULO PULPO","TILAPIA ENTERA",
+  "TILAPIA SUCIA","TOSTON DE PLATANO","TROZO CEVICHE","TROZO DE CORVINA",
+  "TUNA STEAK","YUCA TRADICIONAL"
+];
+
+// ── Populate selects ──────────────────────────────────────────
+function init() {
+  // Ruta selects
+  ["m-ruta","ruta-manual-paste"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(!el) return;
+    RUTAS.forEach(function(r) {
+      var opt = document.createElement("option");
+      opt.value = r.label;
+      opt.textContent = r.label;
+      el.appendChild(opt);
+    });
+  });
+  // First product row
+  agregarProducto();
+}
+
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById("tab-paste").style.display = tab==="paste" ? "block" : "none";
+  document.getElementById("tab-manual").style.display = tab==="manual" ? "block" : "none";
+  document.querySelectorAll(".tab").forEach(function(t,i) {
+    t.classList.toggle("active", (i===0&&tab==="paste")||(i===1&&tab==="manual"));
+  });
+}
+
+// ── PARSER: text → structured order ──────────────────────────
+var parsedData = null;
+
+function parsearTexto(texto) {
+  if(!texto.trim()) {
+    document.getElementById("preview").classList.remove("show");
+    document.getElementById("btnEnviarPaste").disabled = true;
+    parsedData = null;
+    return;
+  }
+
+  var lines = texto.split("\n").map(function(l){return l.trim();}).filter(Boolean);
+  var data = { cliente:"", ciudad:"", ruta:"", rutaTab:"", vendedor:"", productos:[], notas:"" };
+  var enProductos = false; // flag: we are reading product lines
+
+  lines.forEach(function(line) {
+    var low = line.toLowerCase();
+
+    // Cliente
+    if(low.startsWith("cliente:") || low.startsWith("cliente :")) {
+      data.cliente = line.split(":").slice(1).join(":").trim();
+      enProductos = false;
+    }
+    // Ciudad
+    else if(low.startsWith("ciudad:")) {
+      data.ciudad = line.split(":").slice(1).join(":").trim();
+      enProductos = false;
+    }
+    // Ruta
+    else if(low.startsWith("ruta:") || low.startsWith("ruta correspondiente:") || low.startsWith("ruta ")) {
+      var rutaVal = low.startsWith("ruta ") && !low.startsWith("ruta:") 
+        ? line.trim() 
+        : line.split(":").slice(1).join(":").trim();
+      data.ruta = rutaVal;
+      data.rutaTab = detectarRuta(rutaVal);
+      enProductos = false;
+    }
+    // Vendedor
+    else if(low.startsWith("vendedor:")) {
+      data.vendedor = line.split(":").slice(1).join(":").trim();
+      enProductos = false;
+    }
+    // Notas
+    else if(low.startsWith("nota:") || low.startsWith("notas:") || low.startsWith("observacion:")) {
+      data.notas = line.split(":").slice(1).join(":").trim();
+      enProductos = false;
+    }
+    // Productos header line — may have inline products OR start multi-line list
+    else if(low.startsWith("producto") || low.startsWith("productos:")) {
+      var prodText = line.split(":").slice(1).join(":").trim();
+      if(prodText) {
+        parsearProductos(prodText, data);
+      }
+      enProductos = true; // next plain lines are also products
+    }
+    // Bullet/dash lines
+    else if(line.startsWith("-") || line.startsWith("•") || line.startsWith("*")) {
+      parsearProductos(line.replace(/^[-•*]\s*/,""), data);
+    }
+    // Plain lines after "Productos:" header — treat as product lines
+    else if(enProductos) {
+      // Stop if it looks like a label line
+      if(low.includes(":") && !low.match(/^\d/)) {
+        enProductos = false;
+      } else {
+        parsearProductos(line, data);
+      }
+    }
+  });
+
+  parsedData = data;
+  mostrarPreview(data);
+}
+
+function parsearProductos(texto, data) {
+  // Split by comma or semicolon
+  var items = texto.split(/[,;]+/);
+  items.forEach(function(item) {
+    item = item.trim();
+    if(!item || item.length < 2) return;
+
+    // Extract note in parentheses
+    var notaMatch = item.match(/\(([^)]+)\)/);
+    var nota = notaMatch ? notaMatch[1].trim() : "";
+    item = item.replace(/\([^)]+\)/,"").trim();
+
+    // Normalize: "5 libras de X" → "X 5lb"
+    item = item
+      .replace(/libras?\s+de\s+/gi, " de ")
+      .replace(/unidades?\s+de\s+/gi, " de ")
+      .replace(/cajas?\s+de\s+/gi, " caja de ");
+
+    // Extract quantity (number + optional unit)
+    var cantMatch = item.match(/(\d+\.?\d*)\s*(lb|lbs|kg|unidades?|u|cajas?|bolsas?|libras?)?/i);
+    var cant = "";
+    if(cantMatch) {
+      var unit = cantMatch[2] || "";
+      unit = unit.replace(/libras?/i,"lb").replace(/unidades?/i,"u").replace(/cajas?/i,"caja");
+      cant = cantMatch[1] + (unit ? " "+unit.toLowerCase() : " lb");
+    }
+
+    // Remove quantity from name
+    var nombre = item
+      .replace(/(\d+\.?\d*)\s*(lb|lbs|kg|unidades?|u|cajas?|bolsas?|libras?)?/i,"")
+      .replace(/\bde\b/gi,"")
+      .replace(/[-:]/g,"")
+      .replace(/\s+/g," ")
+      .trim();
+
+    if(nombre.length > 1 && cant) {
+      var matched = matchProducto(nombre);
+      data.productos.push({ 
+        nombre: matched || nombre.toUpperCase(), 
+        cantidad: cant, 
+        nota: nota,
+        matched: !!matched
+      });
+    }
+  });
+}
+
+function matchProducto(texto) {
+  var low = texto.toLowerCase().trim();
+  // Exact match
+  var exact = PRODUCTOS.find(function(p){ return p.toLowerCase() === low; });
+  if(exact) return exact;
+  // Partial match
+  var partial = PRODUCTOS.find(function(p){ return p.toLowerCase().includes(low) || low.includes(p.toLowerCase().substring(0,6)); });
+  return partial || null;
+}
+
+function detectarRuta(texto) {
+  var low = texto.toLowerCase()
+    .replace(/miércoles/g,"miercoles")
+    .replace(/danlí/g,"danli")
+    .replace(/á/g,"a").replace(/é/g,"e").replace(/í/g,"i").replace(/ó/g,"o").replace(/ú/g,"u");
+  
+  var best = null, bestScore = 0;
+  
+  RUTAS.forEach(function(r) {
+    var score = 0;
+    var tabLow = r.tab.toLowerCase()
+      .replace(/miércoles/g,"miercoles").replace(/á/g,"a").replace(/é/g,"e")
+      .replace(/í/g,"i").replace(/ó/g,"o").replace(/ú/g,"u");
+    var labelLow = r.label.toLowerCase()
+      .replace(/miércoles/g,"miercoles").replace(/á/g,"a").replace(/é/g,"e")
+      .replace(/í/g,"i").replace(/ó/g,"o").replace(/ú/g,"u");
+
+    // Check keywords
+    r.keywords.forEach(function(k){
+      var kNorm = k.toLowerCase().replace(/á/g,"a").replace(/é/g,"e").replace(/í/g,"i").replace(/ó/g,"o").replace(/ú/g,"u");
+      if(low.includes(kNorm)) score += 2;
+    });
+
+    // Check each word of tab name
+    tabLow.split(/\s+/).forEach(function(w) {
+      if(w.length > 3 && low.includes(w)) score += 3;
+    });
+
+    // Exact match bonus
+    if(low === tabLow || low === labelLow) score += 10;
+
+    if(score > bestScore) { bestScore = score; best = r; }
+  });
+  
+  return bestScore > 0 ? best : null;
+}
+
+function mostrarPreview(data) {
+  var preview = document.getElementById("preview");
+  var content = document.getElementById("preview-content");
+  var badge = document.getElementById("preview-ruta-badge");
+  var error = document.getElementById("parse-error");
+  var rutaOverride = document.getElementById("ruta-override");
+  var btn = document.getElementById("btnEnviarPaste");
+
+  if(!data.cliente && !data.productos.length) {
+    preview.classList.remove("show");
+    error.textContent = "No se detectó información válida. Asegúrate de incluir Cliente:, Productos: y Ruta:";
+    error.classList.add("show");
+    btn.disabled = true;
+    return;
+  }
+
+  error.classList.remove("show");
+
+  var html = "";
+  if(data.cliente) html += row("Cliente", data.cliente);
+  if(data.ciudad)  html += row("Ciudad", data.ciudad);
+  if(data.vendedor) html += row("Vendedor", data.vendedor);
+  if(data.notas)   html += row("Notas", data.notas);
+
+  if(data.productos.length) {
+    html += "<div style='margin-top:8px;margin-bottom:4px;font-size:11px;font-weight:700;color:#6b7280'>PRODUCTOS ("+data.productos.length+")</div>";
+    data.productos.forEach(function(p) {
+      html += "<div class='preview-prod'>"
+        + "<div><span class='preview-prod-nom'>"+p.nombre+"</span>"
+        + (p.nota ? "<div style='font-size:10px;color:#f97316;margin-top:2px'>📝 "+p.nota+"</div>" : "")
+        + "</div>"
+        + "<span class='preview-prod-cant'>"+p.cantidad+"</span></div>";
+    });
+  }
+
+  content.innerHTML = html;
+
+  if(data.rutaTab) {
+    badge.textContent = "📍 " + data.rutaTab.label;
+    badge.style.display = "inline-flex";
+    rutaOverride.style.display = "none";
+  } else {
+    badge.style.display = "none";
+    rutaOverride.style.display = "block";
+  }
+
+  preview.classList.add("show");
+  btn.disabled = !data.cliente || !data.productos.length;
+}
+
+function row(label, val) {
+  return "<div class='preview-row'><span class='preview-label'>"+label+"</span><span class='preview-val'>"+val+"</span></div>";
+}
+
+// ── ENVIAR pedido paste ───────────────────────────────────────
+async function enviarPedidoPaste() {
+  if(!parsedData) return;
+
+  var ruta = parsedData.rutaTab ? parsedData.rutaTab.label : document.getElementById("ruta-manual-paste").value;
+  var rutaTab = parsedData.rutaTab ? parsedData.rutaTab.tab : (RUTAS.find(function(r){return r.label===ruta;})||{tab:ruta}).tab;
+
+  if(!ruta) { alert("Selecciona la ruta antes de enviar."); return; }
+  if(!parsedData.cliente) { alert("No se detectó el cliente."); return; }
+  if(!parsedData.productos.length) { alert("No se detectaron productos."); return; }
+
+  setLoading("paste", true);
+
+  var payload = {
+    cliente: parsedData.cliente,
+    ciudad: parsedData.ciudad || "",
+    ruta: ruta,
+    rutaTab: rutaTab,
+    vendedor: parsedData.vendedor || "",
+    productos: parsedData.productos,
+    notas: parsedData.notas || ""
+  };
+
+  await enviar(payload, "paste");
+}
+
+// ── MANUAL mode ───────────────────────────────────────────────
+var prodCount = 0;
+
+function agregarProducto() {
+  var list = document.getElementById("prod-list");
+  var id = ++prodCount;
+  var div = document.createElement("div");
+  div.className = "prod-item";
+  div.id = "prod-"+id;
+
+  var sel = document.createElement("select");
+  sel.className = "select";
+  sel.style.flex = "2";
+  sel.innerHTML = "<option value=''>-- Producto --</option>";
+  PRODUCTOS.forEach(function(p){
+    var opt = document.createElement("option");
+    opt.value = p; opt.textContent = p;
+    sel.appendChild(opt);
+  });
+
+  var inp = document.createElement("input");
+  inp.className = "input";
+  inp.style.flex = "0 0 80px";
+  inp.placeholder = "Cant.";
+  inp.type = "text";
+
+  var nota = document.createElement("input");
+  nota.className = "input";
+  nota.style.flex = "1";
+  nota.placeholder = "Nota (opcional)";
+  nota.type = "text";
+
+  var del = document.createElement("button");
+  del.className = "del-btn";
+  del.textContent = "✕";
+  del.onclick = function(){ document.getElementById("prod-"+id).remove(); };
+
+  div.appendChild(sel);
+  div.appendChild(inp);
+  div.appendChild(nota);
+  div.appendChild(del);
+  list.appendChild(div);
+}
+
+async function enviarPedidoManual() {
+  var vendedor = document.getElementById("m-vendedor").value.trim();
+  var ruta = document.getElementById("m-ruta").value;
+  var cliente = document.getElementById("m-cliente").value.trim();
+  var ciudad = document.getElementById("m-ciudad").value.trim();
+  var notas = document.getElementById("m-notas").value.trim();
+  var err = document.getElementById("manual-error");
+
+  if(!vendedor||!ruta||!cliente) {
+    err.textContent = "Completa Vendedor, Ruta y Cliente.";
+    err.classList.add("show"); return;
+  }
+
+  var productos = [];
+  document.querySelectorAll("#prod-list .prod-item").forEach(function(row) {
+    var inputs = row.querySelectorAll("input");
+    var sel = row.querySelector("select");
+    var cant = inputs[0] ? inputs[0].value.trim() : "";
+    var nota = inputs[1] ? inputs[1].value.trim() : "";
+    if(sel.value && cant) {
+      productos.push({ nombre: sel.value, cantidad: cant, nota: nota });
+    }
+  });
+
+  if(!productos.length) {
+    err.textContent = "Agrega al menos un producto con cantidad.";
+    err.classList.add("show"); return;
+  }
+
+  err.classList.remove("show");
+  setLoading("manual", true);
+
+  var rutaObj = RUTAS.find(function(r){return r.label===ruta;}) || { tab: ruta };
+  await enviar({ cliente, ciudad, ruta, rutaTab: rutaObj.tab, vendedor, productos, notas }, "manual");
+}
+
+// ── Core send ─────────────────────────────────────────────────
+async function enviar(payload, mode) {
+  try {
+    // POST via hidden iframe - works without CORS restrictions
+    var iframe = document.getElementById("snd_iframe");
+    if(!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.name = "snd_iframe";
+      iframe.id = "snd_iframe";
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
+    }
+
+    var form = document.createElement("form");
+    form.method = "POST";
+    form.action = APPS_SCRIPT_URL;
+    form.target = "snd_iframe";
+    form.style.display = "none";
+
+    var inp = document.createElement("input");
+    inp.type = "hidden";
+    inp.name = "data";
+    inp.value = JSON.stringify(payload);
+    form.appendChild(inp);
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(function(){ 
+      try { document.body.removeChild(form); } catch(e){}
+    }, 1000);
+
+    // Show success after 2.5 seconds
+    setTimeout(function() {
+      setLoading(mode, false);
+      mostrarExito(payload.rutaTab || payload.ruta, payload.productos.length, payload.cliente);
+    }, 2500);
+
+  } catch(e) {
+    setLoading(mode, false);
+    alert("Error: " + e.message);
+  }
+}
+
+function mostrarExito(tab, count, cliente) {
+  document.getElementById("success-tab-name").textContent = "📋 Pestaña: " + tab;
+  document.getElementById("success-detail").textContent =
+    count + " producto(s) de " + cliente + " registrados correctamente en el Sheet.";
+  document.getElementById("successOverlay").classList.add("show");
+}
+
+function resetForm() {
+  document.getElementById("successOverlay").classList.remove("show");
+  document.getElementById("pasteInput").value = "";
+  document.getElementById("preview").classList.remove("show");
+  document.getElementById("btnEnviarPaste").disabled = true;
+  document.getElementById("m-cliente").value = "";
+  document.getElementById("m-ciudad").value = "";
+  document.getElementById("m-notas").value = "";
+  document.getElementById("prod-list").innerHTML = "";
+  prodCount = 0;
+  agregarProducto();
+  parsedData = null;
+}
+
+function setLoading(mode, loading) {
+  var spinner = document.getElementById("spinner-"+mode);
+  var txt = document.getElementById("btn-"+mode+"-txt");
+  var btn = document.getElementById("btnEnviar"+mode.charAt(0).toUpperCase()+mode.slice(1));
+  spinner.style.display = loading ? "block" : "none";
+  txt.textContent = loading ? "Enviando..." : "📤 Enviar pedido al Sheet";
+  if(btn) btn.disabled = loading;
+}
+
+init();
+</script>
+</body>
+</html>
